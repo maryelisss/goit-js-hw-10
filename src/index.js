@@ -1,22 +1,26 @@
+import debounce from 'lodash.debounce';
 import './css/styles.css';
 import API from './fetchCountries.js'
-
-// const _ = require('lodash'); 
+import Notiflix, { Notify } from 'notiflix';
 
 const DEBOUNCE_DELAY = 300;
-
 const input = document.querySelector("#search-box");
-
-// input.addEventListener("input", _.debounce(onSearch, DEBOUNCE_DELAY));
-input.addEventListener("input", onSearch);
-
 const cardContainer = document.querySelector(".country-info");
 const cardList = document.querySelector(".country-list");
 
+input.addEventListener('input', debounce(onSearch, DEBOUNCE_DELAY));
 
 function onSearch(e) {
-    const contriesName = e.currentTarget.value;
-    API.fetchCountries(contriesName).then(searchResult).catch(clearScrin());
+    const countriesName = e.target.value.trim();
+    if (countriesName !== '') {
+        API.fetchCountries(countriesName).then(searchResult).catch(() => {
+            Notify.warning(`Oops, there is no country with that name`);
+            cardList.innerHTML = ``;
+            cardContainer.innerHTML = ``;
+        });
+    }
+    else {cardList.innerHTML = ``;
+    cardContainer.innerHTML = ``;}
 }
 
 function searchResult(array) {
@@ -27,12 +31,12 @@ function searchResult(array) {
         renderCountriesList(array);
     }
     else {
-        console.log(`Too many matches found. Please enter a more specific name.`);
+        Notify.info(`Too many matches found. Please enter a more specific name.`);
     }
-
 } 
 
 function renderCountriesList(countriesArray) {
+        cardContainer.innerHTML = '';
         const murkup = countriesArray.map(({flags, name}) => {
             return `<li class="country-item">
             <img class="country-flag country-flag__small" src="${flags.svg}" alt="${flags.alt}"/>
@@ -43,6 +47,7 @@ function renderCountriesList(countriesArray) {
 }
 
 function renderCountriesCard(country) {
+    cardList.innerHTML = '';
     const murkup = country.map(({ flags, name, capital, population, languages }) => {
             const languageArray = [];
             for (const language of languages) {
@@ -60,8 +65,5 @@ function renderCountriesCard(country) {
         cardContainer.innerHTML = murkup;
 };
 
-function clearScrin() {
-    cardList.innerHTML = ``;
-    cardContainer.innerHTML = ``;
-    console.log(`Oops, there is no country with that name`)
-}
+
+
